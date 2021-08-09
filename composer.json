@@ -1,5 +1,5 @@
 {
-    "name": "mailchimp/marketing",
+    "name": "testudio/mailchimp-marketing",
     "version": "3.0.56",
     "description": "",
     "keywords": [
@@ -8,12 +8,12 @@
         "sdk",
         "api"
     ],
-    "homepage": "http://swagger.io",
+    "homepage": "https://www.drupal.org/project/mailchimp_marketing",
     "license": "proprietary",
     "authors": [
         {
             "name": "Mailchimp",
-            "homepage": "https://github.com/mailchimp/mailchimp-marketing-php"
+            "homepage": "https://github.com/testudio/mailchimp-marketing-php"
         }
     ],
     "require": {
@@ -22,7 +22,7 @@
         "ext-json": "*",
         "ext-mbstring": "*",
         "guzzlehttp/psr7": "<2.0",
-        "guzzlehttp/guzzle": "^7.2"
+        "guzzlehttp/guzzle": "^6.2|^7.2"
     },
     "require-dev": {
         "phpunit/phpunit": "^7",
