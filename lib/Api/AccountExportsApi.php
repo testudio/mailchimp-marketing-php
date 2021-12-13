@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ActivityFeedApi
+ * AccountExportsApi
  * PHP version 5
  *
  * @category Class
@@ -41,7 +41,7 @@ use MailchimpMarketing\Configuration;
 use MailchimpMarketing\HeaderSelector;
 use MailchimpMarketing\ObjectSerializer;
 
-class ActivityFeedApi
+class AccountExportsApi
 {
     protected $client;
     protected $config;
@@ -63,15 +63,15 @@ class ActivityFeedApi
         return $this->config;
     }
 
-    public function getChimpChatter($count = '10', $offset = '0')
+    public function listAccountExports($fields = null, $exclude_fields = null, $count = '10', $offset = '0')
     {
-        $response = $this->getChimpChatterWithHttpInfo($count, $offset);
+        $response = $this->listAccountExportsWithHttpInfo($fields, $exclude_fields, $count, $offset);
         return $response;
     }
 
-    public function getChimpChatterWithHttpInfo($count = '10', $offset = '0')
+    public function listAccountExportsWithHttpInfo($fields = null, $exclude_fields = null, $count = '10', $offset = '0')
     {
-        $request = $this->getChimpChatterRequest($count, $offset);
+        $request = $this->listAccountExportsRequest($fields, $exclude_fields, $count, $offset);
 
         try {
             $options = $this->createHttpClientOption();
@@ -107,19 +107,33 @@ class ActivityFeedApi
         }
     }
 
-    protected function getChimpChatterRequest($count = '10', $offset = '0')
+    protected function listAccountExportsRequest($fields = null, $exclude_fields = null, $count = '10', $offset = '0')
     {
         if ($count !== null && $count > 1000) {
-            throw new \InvalidArgumentException('invalid value for "$count" when calling ActivityFeedApi., must be smaller than or equal to 1000.');
+            throw new \InvalidArgumentException('invalid value for "$count" when calling AccountExportsApi., must be smaller than or equal to 1000.');
         }
 
 
-        $resourcePath = '/activity-feed/chimp-chatter';
+        $resourcePath = '/account-exports';
         $formParams = [];
         $queryParams = [];
         $headerParams = [];
         $httpBody = '';
         $multipart = false;
+        // query params
+        if (is_array($fields)) {
+            $queryParams['fields'] = ObjectSerializer::serializeCollection($fields, 'csv');
+        } else
+        if ($fields !== null) {
+            $queryParams['fields'] = ObjectSerializer::toQueryValue($fields);
+        }
+        // query params
+        if (is_array($exclude_fields)) {
+            $queryParams['exclude_fields'] = ObjectSerializer::serializeCollection($exclude_fields, 'csv');
+        } else
+        if ($exclude_fields !== null) {
+            $queryParams['exclude_fields'] = ObjectSerializer::toQueryValue($exclude_fields);
+        }
         // query params
         if ($count !== null) {
             $queryParams['count'] = ObjectSerializer::toQueryValue($count);
@@ -200,6 +214,146 @@ class ActivityFeedApi
         $query = Query::build($queryParams);
         return new Request(
             'GET',
+            $this->config->getHost() . $resourcePath . ($query ? "?{$query}" : ''),
+            $headers,
+            $httpBody
+        );
+    }
+
+    public function createAccountExport($body)
+    {
+        $response = $this->createAccountExportWithHttpInfo($body);
+        return $response;
+    }
+
+    public function createAccountExportWithHttpInfo($body)
+    {
+        $request = $this->createAccountExportRequest($body);
+
+        try {
+            $options = $this->createHttpClientOption();
+            try {
+                $response = $this->client->send($request, $options);
+            } catch (RequestException $e) {
+                throw $e;
+            }
+
+            $statusCode = $response->getStatusCode();
+
+            if ($statusCode < 200 || $statusCode > 299) {
+                throw new ApiException(
+                    sprintf(
+                        '[%d] Error connecting to the API (%s)',
+                        $statusCode,
+                        $request->getUri()
+                    ),
+                    $statusCode,
+                    $response->getHeaders(),
+                    $response->getBody()
+                );
+            }
+
+            $responseBody = $response->getBody();
+            $content = $responseBody->getContents();
+            $content = json_decode($content);
+
+            return $content;
+
+        } catch (ApiException $e) {
+            throw $e->getResponseBody();
+        }
+    }
+
+    protected function createAccountExportRequest($body)
+    {
+        // verify the required parameter 'body' is set
+        if ($body === null || (is_array($body) && count($body) === 0)) {
+            throw new \InvalidArgumentException(
+                'Missing the required parameter $body when calling '
+            );
+        }
+
+        $resourcePath = '/account-exports';
+        $formParams = [];
+        $queryParams = [];
+        $headerParams = [];
+        $httpBody = '';
+        $multipart = false;
+
+
+        // body params
+        $_tempBody = null;
+        if (isset($body)) {
+            $_tempBody = $body;
+        }
+
+        if ($multipart) {
+            $headers = $this->headerSelector->selectHeadersForMultipart(
+                ['application/json', 'application/problem+json']
+            );
+        } else {
+            $headers = $this->headerSelector->selectHeaders(
+                ['application/json', 'application/problem+json'],
+                ['application/json']
+            );
+        }
+
+        // for model (json/xml)
+        if (isset($_tempBody)) {
+            $httpBody = $_tempBody;
+
+            if($headers['Content-Type'] === 'application/json') {
+                if ($httpBody instanceof \stdClass) {
+                    $httpBody = \GuzzleHttp\json_encode($httpBody);
+                }
+                if (is_array($httpBody)) {
+                    $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($httpBody));
+                }
+            }
+        } elseif (count($formParams) > 0) {
+            if ($multipart) {
+                $multipartContents = [];
+                foreach ($formParams as $formParamName => $formParamValue) {
+                    $multipartContents[] = [
+                        'name' => $formParamName,
+                        'contents' => $formParamValue
+                    ];
+                }
+                $httpBody = new MultipartStream($multipartContents);
+
+            } elseif ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode($formParams);
+
+            } else {
+                $httpBody = Query::build($formParams);
+            }
+        }
+
+
+        // Basic Authentication
+        if (!empty($this->config->getUsername()) && !empty($this->config->getPassword())) {
+            $headers['Authorization'] = 'Basic ' . base64_encode($this->config->getUsername() . ":" . $this->config->getPassword());
+        }
+
+        // OAuth Authentication
+        if (!empty($this->config->getAccessToken())) {
+            $headers['Authorization'] = 'Bearer ' . $this->config->getAccessToken();
+        }
+
+        $defaultHeaders = [];
+        if ($this->config->getUserAgent()) {
+            $defaultHeaders['User-Agent'] = $this->config->getUserAgent();
+        }
+
+        $headers = array_merge(
+            $defaultHeaders,
+            $headerParams,
+            $headers
+        );
+
+        $query = Query::build($queryParams);
+        return new Request(
+            'POST',
             $this->config->getHost() . $resourcePath . ($query ? "?{$query}" : ''),
             $headers,
             $httpBody

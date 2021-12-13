@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ActivityFeedApi
+ * AccountExportApi
  * PHP version 5
  *
  * @category Class
@@ -41,7 +41,7 @@ use MailchimpMarketing\Configuration;
 use MailchimpMarketing\HeaderSelector;
 use MailchimpMarketing\ObjectSerializer;
 
-class ActivityFeedApi
+class AccountExportApi
 {
     protected $client;
     protected $config;
@@ -63,15 +63,15 @@ class ActivityFeedApi
         return $this->config;
     }
 
-    public function getChimpChatter($count = '10', $offset = '0')
+    public function getAccountExports($export_id, $fields = null, $exclude_fields = null)
     {
-        $response = $this->getChimpChatterWithHttpInfo($count, $offset);
+        $response = $this->getAccountExportsWithHttpInfo($export_id, $fields, $exclude_fields);
         return $response;
     }
 
-    public function getChimpChatterWithHttpInfo($count = '10', $offset = '0')
+    public function getAccountExportsWithHttpInfo($export_id, $fields = null, $exclude_fields = null)
     {
-        $request = $this->getChimpChatterRequest($count, $offset);
+        $request = $this->getAccountExportsRequest($export_id, $fields, $exclude_fields);
 
         try {
             $options = $this->createHttpClientOption();
@@ -107,28 +107,44 @@ class ActivityFeedApi
         }
     }
 
-    protected function getChimpChatterRequest($count = '10', $offset = '0')
+    protected function getAccountExportsRequest($export_id, $fields = null, $exclude_fields = null)
     {
-        if ($count !== null && $count > 1000) {
-            throw new \InvalidArgumentException('invalid value for "$count" when calling ActivityFeedApi., must be smaller than or equal to 1000.');
+        // verify the required parameter 'export_id' is set
+        if ($export_id === null || (is_array($export_id) && count($export_id) === 0)) {
+            throw new \InvalidArgumentException(
+                'Missing the required parameter $export_id when calling '
+            );
         }
 
-
-        $resourcePath = '/activity-feed/chimp-chatter';
+        $resourcePath = '/account-exports/{export_id}';
         $formParams = [];
         $queryParams = [];
         $headerParams = [];
         $httpBody = '';
         $multipart = false;
         // query params
-        if ($count !== null) {
-            $queryParams['count'] = ObjectSerializer::toQueryValue($count);
+        if (is_array($fields)) {
+            $queryParams['fields'] = ObjectSerializer::serializeCollection($fields, 'csv');
+        } else
+        if ($fields !== null) {
+            $queryParams['fields'] = ObjectSerializer::toQueryValue($fields);
         }
         // query params
-        if ($offset !== null) {
-            $queryParams['offset'] = ObjectSerializer::toQueryValue($offset);
+        if (is_array($exclude_fields)) {
+            $queryParams['exclude_fields'] = ObjectSerializer::serializeCollection($exclude_fields, 'csv');
+        } else
+        if ($exclude_fields !== null) {
+            $queryParams['exclude_fields'] = ObjectSerializer::toQueryValue($exclude_fields);
         }
 
+        // path params
+        if ($export_id !== null) {
+            $resourcePath = str_replace(
+                '{' . 'export_id' . '}',
+                ObjectSerializer::toPathValue($export_id),
+                $resourcePath
+            );
+        }
 
         // body params
         $_tempBody = null;
